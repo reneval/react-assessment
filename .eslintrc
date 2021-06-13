@@ -17,6 +17,7 @@
   "extends": ["airbnb", "plugin:react/recommended"],
   "plugins": ["react-hooks"],
   "rules": {
+    "max-len": [2, 120, 4],
     "import/no-extraneous-dependencies": 0,
     "import/prefer-default-export": 0,
     "import/named": 0,

@@ -7,7 +7,7 @@ const Row = styled.div`
   margin-bottom: 10px;
   border: 1px solid #000;
   padding: 20px;
-  
+
   span {
     display: block;
     margin-bottom: 5px;
@@ -51,16 +51,20 @@ export default class UserList extends Component {
     };
   }
 
-  fetchData = () => {
-    const { filter } = this.state;
-    fetch(`https://jsonplaceholder.typicode.com/users${filter ? `?username=${encodeURIComponent(filter)}` : ''}`).then(async (response) => {
-      const data = await response.json();
-      this.setState({ data });
-    });
-  }
 
   componentDidMount() {
     this.fetchData();
+  }
+
+  fetchData = () => {
+    const { filter } = this.state;
+    fetch(
+      `https://jsonplaceholder.typicode.com/users${filter ? `?username=${encodeURIComponent(filter)}` : ''}`
+    )
+      .then(async (response) => {
+        const data = await response.json();
+        this.setState({ data });
+      });
   }
 
   render() {
@@ -68,8 +72,8 @@ export default class UserList extends Component {
 
     const setFilter = (e) => {
       this.setState({ value: e.target.value });
-      const debounceFn = debounce((e) => {
-        this.setState({ filter: e.target.value }, this.fetchData);
+      const debounceFn = debounce((ev) => {
+        this.setState({ filter: ev.target.value }, this.fetchData);
       });
 
       debounceFn(e);
