@@ -26,7 +26,7 @@ const Users = styled.div`
   margin-top: 15px;
 `;
 
-const debounce = (func, wait = 5000) => {
+const debounce = (func, wait = 1000) => {
   let timeout = null;
 
   const cleanup = () => {
@@ -35,7 +35,6 @@ const debounce = (func, wait = 5000) => {
 
   return () => {
     cleanup();
-
     timeout = setTimeout(func, wait);
   };
 };
@@ -56,6 +55,11 @@ export default class UserList extends Component {
     this.fetchData();
   }
 
+  setFilter = debounce(() => {
+    const { value } = this.state;
+    this.setState({ filter: value }, this.fetchData);
+  })
+
   fetchData = () => {
     const { filter } = this.state;
     fetch(
@@ -67,52 +71,50 @@ export default class UserList extends Component {
       });
   }
 
-  render() {
-    const { data, value } = this.state;
 
-    const setFilter = (e) => {
-      this.setState({ value: e.target.value });
-      const debounceFn = debounce((ev) => {
-        this.setState({ filter: ev.target.value }, this.fetchData);
-      });
-
-      debounceFn(e);
+    onFilterChange = (e) => {
+      const { value } = e.target;
+      this.setState({ value }, this.setFilter);
     };
 
-    return (
-      <div>
+
+    render() {
+      const { data, value } = this.state;
+
+      return (
         <div>
-          Filter:
-          <input
-            type="text"
-            onChange={setFilter}
-            value={value}
-            placeholder="Enter username"
-          />
+          <div>
+            Filter:
+            <input
+              type="text"
+              onChange={this.onFilterChange}
+              value={value}
+              placeholder="Enter username"
+            />
+          </div>
+          <Users>
+            {data.map((user) => (
+              <Row key={user.id}>
+                <UserInfo>
+                  <span>{`Name: ${user.name}`}</span>
+                  <span>{`Username: ${user.username}`}</span>
+                </UserInfo>
+                <div>
+                  <div>
+                    <span>{user.address.street}</span>
+                    <span>{user.address.suite}</span>
+                    <span>{user.address.city}</span>
+                    <span>{user.address.zipcode}</span>
+                  </div>
+                  <div>
+                    <span>{user.email}</span>
+                    <span>{user.phone}</span>
+                  </div>
+                </div>
+              </Row>
+            ))}
+          </Users>
         </div>
-        <Users>
-          {data.map((user) => (
-            <Row key={user.id}>
-              <UserInfo>
-                <span>{`Name: ${user.name}`}</span>
-                <span>{`Username: ${user.username}`}</span>
-              </UserInfo>
-              <div>
-                <div>
-                  <span>{user.address.street}</span>
-                  <span>{user.address.suite}</span>
-                  <span>{user.address.city}</span>
-                  <span>{user.address.zipcode}</span>
-                </div>
-                <div>
-                  <span>{user.email}</span>
-                  <span>{user.phone}</span>
-                </div>
-              </div>
-            </Row>
-          ))}
-        </Users>
-      </div>
-    );
-  }
+      );
+    }
 }
