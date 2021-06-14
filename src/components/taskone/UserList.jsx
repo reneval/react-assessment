@@ -1,4 +1,6 @@
-import React, { Component } from 'react';
+import React, {
+  useCallback, useEffect, useMemo, useState
+} from 'react';
 import styled from 'styled-components';
 
 const Row = styled.div`
@@ -33,88 +35,76 @@ const debounce = (func, wait = 1000) => {
     if (timeout) clearTimeout(timeout);
   };
 
-  return () => {
+  return (...arg) => {
     cleanup();
-    timeout = setTimeout(func, wait);
+    timeout = setTimeout(() => func(...arg), wait);
   };
 };
 
-export default class UserList extends Component {
-  constructor(props) {
-    super(props);
+const getFilterURL = (filter) => `https://jsonplaceholder.typicode.com/users${
+  filter ? `?username=${encodeURIComponent(filter)}` : ''
+}`;
 
-    this.state = {
-      data: [],
-      filter: '',
-      value: ''
-    };
-  }
+const UserList = () => {
+  const [data, setData] = useState([]);
+  const [filter, setFilter] = useState('');
+  const [value, setValue] = useState('');
 
+  const setFilterDebounced = useMemo(() => debounce((val) => {
+    setFilter(val);
+  }), [setFilter]);
 
-  componentDidMount() {
-    this.fetchData();
-  }
+  useEffect(() => {
+    setFilterDebounced(value);
+  }, [value]);
 
-  setFilter = debounce(() => {
-    const { value } = this.state;
-    this.setState({ filter: value }, this.fetchData);
-  })
-
-  fetchData = () => {
-    const { filter } = this.state;
-    fetch(
-      `https://jsonplaceholder.typicode.com/users${filter ? `?username=${encodeURIComponent(filter)}` : ''}`
-    )
-      .then(async (response) => {
-        const data = await response.json();
-        this.setState({ data });
-      });
-  }
+  useEffect(async () => {
+    const response = await fetch(getFilterURL(filter));
+    const respData = await response.json();
+    setData(respData);
+  }, [filter]);
 
 
-    onFilterChange = (e) => {
-      const { value } = e.target;
-      this.setState({ value }, this.setFilter);
-    };
+  const onFilterChange = useCallback((e) => {
+    const { value: inputValue } = e.target;
+    setValue(inputValue);
+  }, [setValue]);
 
+  return (
+    <div>
+      <div>
+        Filter:
+        <input
+          type="text"
+          onChange={onFilterChange}
+          value={value}
+          placeholder="Enter username"
+        />
+      </div>
+      <Users>
+        {data.map((user) => (
+          <Row key={user.id}>
+            <UserInfo>
+              <span>{`Name: ${user.name}`}</span>
+              <span>{`Username: ${user.username}`}</span>
+            </UserInfo>
+            <div>
+              <div>
+                <span>{user.address.street}</span>
+                <span>{user.address.suite}</span>
+                <span>{user.address.city}</span>
+                <span>{user.address.zipcode}</span>
+              </div>
+              <div>
+                <span>{user.email}</span>
+                <span>{user.phone}</span>
+              </div>
+            </div>
+          </Row>
+        ))}
+      </Users>
+    </div>
+  );
+};
 
-    render() {
-      const { data, value } = this.state;
-
-      return (
-        <div>
-          <div>
-            Filter:
-            <input
-              type="text"
-              onChange={this.onFilterChange}
-              value={value}
-              placeholder="Enter username"
-            />
-          </div>
-          <Users>
-            {data.map((user) => (
-              <Row key={user.id}>
-                <UserInfo>
-                  <span>{`Name: ${user.name}`}</span>
-                  <span>{`Username: ${user.username}`}</span>
-                </UserInfo>
-                <div>
-                  <div>
-                    <span>{user.address.street}</span>
-                    <span>{user.address.suite}</span>
-                    <span>{user.address.city}</span>
-                    <span>{user.address.zipcode}</span>
-                  </div>
-                  <div>
-                    <span>{user.email}</span>
-                    <span>{user.phone}</span>
-                  </div>
-                </div>
-              </Row>
-            ))}
-          </Users>
-        </div>
-      );
-    }
-}
+export default UserList;
